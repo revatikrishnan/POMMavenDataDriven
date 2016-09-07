@@ -1,0 +1,73 @@
+package tests;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+
+import framework.ExcelOperations;
+import pages.HotelAppLoginPage;
+
+public class HotelAppTests {
+	WebDriver driver;
+	HotelAppLoginPage hotelAppLoginPage;
+	ExcelOperations excelOperations = new ExcelOperations();
+	String testDataPath = "D:\\SeleniumTesting\\TestData.xls";
+	String sheetName = "Sheet1";
+	HSSFWorkbook currentWb;
+	
+  @Test
+  public void validateLoginIsSuccessful() {
+	  String userName = excelOperations.readFromExcelObject(currentWb, sheetName, 2, 1);
+	  String password = excelOperations.readFromExcelObject(currentWb, sheetName, 2, 2);
+	  Assert.assertTrue(hotelAppLoginPage.performLogin(userName, password).validateLoginIsSuccessful(), "Login is not successful");
+	  excelOperations.writeToExcelObject(currentWb, sheetName, 2, 3, "TEST IS PASSED");
+  }
+  
+  @Test
+  public void validateLoginIsNotSuccessfulForInvalidCredentials() {
+	  String userName = excelOperations.readFromExcelObject(currentWb, sheetName, 3, 1);
+	  String password = excelOperations.readFromExcelObject(currentWb, sheetName, 3, 2);
+	  Assert.assertFalse(hotelAppLoginPage.performLogin(userName, password).validateLoginIsSuccessful(), "Login is successful for providing invalid data");
+	  excelOperations.writeToExcelObject(currentWb, sheetName, 3, 3, "TEST IS PASSED");
+  }
+  
+  @Test
+  public void validateUserNameIsEnteredSuccessfull()
+  {
+	  String userName = excelOperations.readFromExcelObject(currentWb, sheetName, 4, 1);
+	  Assert.assertTrue(hotelAppLoginPage.enterUserName(userName).validateActualUserName(userName), "Expected User name is not entered in User Name Field");
+	  excelOperations.writeToExcelObject(currentWb, sheetName, 4, 3, "TEST IS PASSED");
+  }
+  
+  
+  @BeforeMethod
+  public void beforeMethod() {
+	  // Launch AUT
+	  driver.get("http://www.adactin.com/HotelApp");
+  }
+
+  @BeforeClass
+  public void beforeClass() throws IOException {
+	  // Launch WebDriver
+	  driver = new FirefoxDriver();
+	  driver.manage().window().maximize();
+	  driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+	  hotelAppLoginPage = new HotelAppLoginPage(driver);
+	  currentWb = excelOperations.getExcelWBObjForReading(testDataPath);
+  }
+
+  @AfterClass
+  public void afterClass() {
+	  excelOperations.saveExcelFile(currentWb, testDataPath);
+	  driver.quit();
+  }
+
+}
